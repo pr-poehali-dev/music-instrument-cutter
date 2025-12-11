@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 
 const Index = () => {
@@ -12,6 +13,10 @@ const Index = () => {
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [activeSection, setActiveSection] = useState<'upload' | 'editor' | 'result'>('upload');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -27,7 +32,9 @@ const Index = () => {
     setIsDragging(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      setUploadedFile(files[0]);
+      const file = files[0];
+      setUploadedFile(file);
+      setAudioUrl(URL.createObjectURL(file));
       setActiveSection('editor');
     }
   };
@@ -35,8 +42,25 @@ const Index = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      setUploadedFile(files[0]);
+      const file = files[0];
+      setUploadedFile(file);
+      setAudioUrl(URL.createObjectURL(file));
       setActiveSection('editor');
+    }
+  };
+
+  const handleHeroUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const togglePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
     }
   };
 
@@ -75,7 +99,7 @@ const Index = () => {
           </div>
           <nav className="hidden md:flex gap-6">
             <a href="#upload" className="text-sm font-medium hover:text-primary transition-colors">Загрузка</a>
-            <a href="#editor" className="text-sm font-medium hover:text-primary transition-colors">Редактор</a>
+            <a href="#pricing" className="text-sm font-medium hover:text-primary transition-colors">Тарифы</a>
             <a href="#gallery" className="text-sm font-medium hover:text-primary transition-colors">Галерея</a>
             <a href="#faq" className="text-sm font-medium hover:text-primary transition-colors">Инструкция</a>
             <a href="#contacts" className="text-sm font-medium hover:text-primary transition-colors">Контакты</a>
@@ -98,7 +122,18 @@ const Index = () => {
               Профессиональная обработка аудио с помощью ИИ. Разделяйте треки, извлекайте вокал, изолируйте инструменты за секунды.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Button size="lg" className="gradient-primary text-white border-0 text-lg px-8 hover:scale-105 transition-transform">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              <Button 
+                size="lg" 
+                className="gradient-primary text-white border-0 text-lg px-8 hover:scale-105 transition-transform"
+                onClick={handleHeroUploadClick}
+              >
                 <Icon name="Upload" size={20} className="mr-2" />
                 Загрузить трек
               </Button>
@@ -324,17 +359,32 @@ const Index = () => {
               <p className="text-center text-muted-foreground mb-12">Ваш обработанный трек готов</p>
               
               <Card className="p-8 glass">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-16 h-16 rounded-xl gradient-primary flex items-center justify-center">
-                    <Icon name="Music" size={32} className="text-white" />
+                <div className="mb-8">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-16 h-16 rounded-xl gradient-primary flex items-center justify-center">
+                      <Icon name="Music" size={32} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-xl font-semibold">{uploadedFile?.name}</h4>
+                      <p className="text-muted-foreground">Вокал изолирован</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="rounded-full w-12 h-12 p-0"
+                      onClick={togglePlayPause}
+                    >
+                      <Icon name={isPlaying ? "Pause" : "Play"} size={24} />
+                    </Button>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-xl font-semibold">{uploadedFile?.name}</h4>
-                    <p className="text-muted-foreground">Вокал изолирован</p>
-                  </div>
-                  <Button variant="outline" className="rounded-full w-12 h-12 p-0">
-                    <Icon name="Play" size={24} />
-                  </Button>
+                  {audioUrl && (
+                    <audio 
+                      ref={audioRef} 
+                      src={audioUrl}
+                      onEnded={() => setIsPlaying(false)}
+                      className="w-full"
+                      controls
+                    />
+                  )}
                 </div>
                 
                 <div className="mb-8">
@@ -389,6 +439,134 @@ const Index = () => {
                   </Button>
                 </Card>
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pricing" className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <h3 className="text-4xl font-bold mb-4 text-center gradient-text">Тарифы</h3>
+            <p className="text-center text-muted-foreground mb-12">Выберите подходящий план для ваших задач</p>
+            
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="p-8 glass hover:scale-105 transition-transform">
+                <div className="mb-6">
+                  <h4 className="text-2xl font-bold mb-2">Базовый</h4>
+                  <p className="text-muted-foreground mb-4">Для пробы сервиса</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold gradient-text">Бесплатно</span>
+                  </div>
+                </div>
+                
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">3 обработки в месяц</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Треки до 5 минут</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Экспорт MP3 320kbps</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Базовая поддержка</span>
+                  </li>
+                </ul>
+                
+                <Button variant="outline" className="w-full">
+                  Начать бесплатно
+                </Button>
+              </Card>
+
+              <Card className="p-8 glass hover:scale-105 transition-transform border-2 border-primary relative">
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 gradient-primary text-white border-0">
+                  Популярный
+                </Badge>
+                
+                <div className="mb-6">
+                  <h4 className="text-2xl font-bold mb-2">Профи</h4>
+                  <p className="text-muted-foreground mb-4">Для музыкантов</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold gradient-text">990₽</span>
+                    <span className="text-muted-foreground">/месяц</span>
+                  </div>
+                </div>
+                
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">50 обработок в месяц</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Без ограничений по времени</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Все форматы экспорта</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Приоритетная поддержка</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Пакетная обработка</span>
+                  </li>
+                </ul>
+                
+                <Button className="w-full gradient-primary text-white border-0">
+                  Оформить подписку
+                </Button>
+              </Card>
+
+              <Card className="p-8 glass hover:scale-105 transition-transform">
+                <div className="mb-6">
+                  <h4 className="text-2xl font-bold mb-2">Студия</h4>
+                  <p className="text-muted-foreground mb-4">Для профессионалов</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold gradient-text">2990₽</span>
+                    <span className="text-muted-foreground">/месяц</span>
+                  </div>
+                </div>
+                
+                <ul className="space-y-3 mb-8">
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Безлимитные обработки</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">API доступ</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Все форматы + стемы</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Персональный менеджер</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Коммерческая лицензия</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Icon name="Check" size={20} className="text-primary mt-0.5" />
+                    <span className="text-sm">Собственный сервер</span>
+                  </li>
+                </ul>
+                
+                <Button variant="outline" className="w-full">
+                  Связаться с нами
+                </Button>
+              </Card>
             </div>
           </div>
         </div>
