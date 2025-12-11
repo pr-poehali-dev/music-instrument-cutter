@@ -1,0 +1,44 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS request for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedHeaders": {
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
+      "name": "POST with valid audio data",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "audio": "SGVsbG8gV29ybGQ=",
+        "type": "vocals",
+        "filename": "test.mp3"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "type": "string",
+        "url": "string",
+        "filename": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST without audio data",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "type": "vocals"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

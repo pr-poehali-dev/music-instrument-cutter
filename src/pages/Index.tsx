@@ -7,6 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 
+const BACKEND_URL = 'https://functions.poehali.dev/41e2326f-ea69-482b-b292-b2a01417d858';
+
 const Index = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -15,6 +17,9 @@ const Index = () => {
   const [activeSection, setActiveSection] = useState<'upload' | 'editor' | 'result'>('upload');
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [processedUrl, setProcessedUrl] = useState<string | null>(null);
+  const [separationType, setSeparationType] = useState<'vocals' | 'drums' | 'bass' | 'other'>('vocals');
+  const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,20 +69,68 @@ const Index = () => {
     }
   };
 
-  const handleProcess = () => {
+  const handleProcess = async (type: 'vocals' | 'drums' | 'bass' | 'other') => {
+    if (!uploadedFile) return;
+    
     setProcessing(true);
     setProgress(0);
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setProcessing(false);
-          setActiveSection('result');
-          return 100;
+    setError(null);
+    setSeparationType(type);
+    
+    try {
+      const reader = new FileReader();
+      
+      reader.onload = async () => {
+        const base64Audio = (reader.result as string).split(',')[1];
+        
+        setProgress(20);
+        
+        const response = await fetch(BACKEND_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            audio: base64Audio,
+            type: type,
+            filename: uploadedFile.name
+          })
+        });
+        
+        setProgress(60);
+        
+        if (!response.ok) {
+          throw new Error('Ошибка обработки аудио');
         }
-        return prev + 10;
-      });
-    }, 300);
+        
+        const data = await response.json();
+        
+        setProgress(90);
+        
+        if (data.success && data.url) {
+          setProcessedUrl(data.url);
+          setProgress(100);
+          setTimeout(() => {
+            setProcessing(false);
+            setActiveSection('result');
+          }, 500);
+        } else {
+          throw new Error('Не удалось получить обработанный файл');
+        }
+      };
+      
+      reader.onerror = () => {
+        setError('Ошибка чтения файла');
+        setProcessing(false);
+      };
+      
+      reader.readAsDataURL(uploadedFile);
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Произошла ошибка');
+      setProcessing(false);
+      setProgress(0);
+    }
   };
 
   const exportFormats = ['MP3', 'WAV', 'FLAC', 'OGG', 'M4A'];
@@ -250,7 +303,7 @@ const Index = () => {
                             <p className="text-sm text-muted-foreground">ИИ алгоритм извлечения голоса</p>
                           </div>
                         </div>
-                        <Button onClick={handleProcess} disabled={processing} className="gradient-primary text-white border-0">
+                        <Button onClick={() => handleProcess('vocals')} disabled={processing} className="gradient-primary text-white border-0">
                           {processing ? (
                             <>
                               <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
@@ -265,10 +318,16 @@ const Index = () => {
                         </Button>
                       </div>
                       
-                      {processing && (
+                      {processing && separationType === 'vocals' && (
                         <div className="animate-fade-in">
                           <Progress value={progress} className="mb-2" />
                           <p className="text-sm text-muted-foreground text-center">{progress}% завершено</p>
+                        </div>
+                      )}
+                      
+                      {error && separationType === 'vocals' && (
+                        <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                          <p className="text-sm text-destructive">{error}</p>
                         </div>
                       )}
                     </div>
@@ -286,11 +345,27 @@ const Index = () => {
                             <p className="text-sm text-muted-foreground">Извлечение перкуссии и барабанов</p>
                           </div>
                         </div>
-                        <Button onClick={handleProcess} className="gradient-primary text-white border-0">
-                          <Icon name="Play" size={18} className="mr-2" />
-                          Запустить
+                        <Button onClick={() => handleProcess('drums')} disabled={processing} className="gradient-primary text-white border-0">
+                          {processing && separationType === 'drums' ? (
+                            <>
+                              <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
+                              Обработка...
+                            </>
+                          ) : (
+                            <>
+                              <Icon name="Play" size={18} className="mr-2" />
+                              Запустить
+                            </>
+                          )}
                         </Button>
                       </div>
+                      
+                      {processing && separationType === 'drums' && (
+                        <div className="animate-fade-in mt-4">
+                          <Progress value={progress} className="mb-2" />
+                          <p className="text-sm text-muted-foreground text-center">{progress}% завершено</p>
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
                   
@@ -306,11 +381,27 @@ const Index = () => {
                             <p className="text-sm text-muted-foreground">Низкочастотные инструменты</p>
                           </div>
                         </div>
-                        <Button onClick={handleProcess} className="gradient-primary text-white border-0">
-                          <Icon name="Play" size={18} className="mr-2" />
-                          Запустить
+                        <Button onClick={() => handleProcess('bass')} disabled={processing} className="gradient-primary text-white border-0">
+                          {processing && separationType === 'bass' ? (
+                            <>
+                              <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
+                              Обработка...
+                            </>
+                          ) : (
+                            <>
+                              <Icon name="Play" size={18} className="mr-2" />
+                              Запустить
+                            </>
+                          )}
                         </Button>
                       </div>
+                      
+                      {processing && separationType === 'bass' && (
+                        <div className="animate-fade-in mt-4">
+                          <Progress value={progress} className="mb-2" />
+                          <p className="text-sm text-muted-foreground text-center">{progress}% завершено</p>
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
                   
@@ -326,11 +417,27 @@ const Index = () => {
                             <p className="text-sm text-muted-foreground">Гитары, клавишные, струнные</p>
                           </div>
                         </div>
-                        <Button onClick={handleProcess} className="gradient-primary text-white border-0">
-                          <Icon name="Play" size={18} className="mr-2" />
-                          Запустить
+                        <Button onClick={() => handleProcess('other')} disabled={processing} className="gradient-primary text-white border-0">
+                          {processing && separationType === 'other' ? (
+                            <>
+                              <Icon name="Loader2" size={18} className="mr-2 animate-spin" />
+                              Обработка...
+                            </>
+                          ) : (
+                            <>
+                              <Icon name="Play" size={18} className="mr-2" />
+                              Запустить
+                            </>
+                          )}
                         </Button>
                       </div>
+                      
+                      {processing && separationType === 'other' && (
+                        <div className="animate-fade-in mt-4">
+                          <Progress value={progress} className="mb-2" />
+                          <p className="text-sm text-muted-foreground text-center">{progress}% завершено</p>
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -355,7 +462,12 @@ const Index = () => {
                     </div>
                     <div className="flex-1">
                       <h4 className="text-xl font-semibold">{uploadedFile?.name}</h4>
-                      <p className="text-muted-foreground">Вокал изолирован</p>
+                      <p className="text-muted-foreground">
+                        {separationType === 'vocals' && 'Вокал изолирован'}
+                        {separationType === 'drums' && 'Ударные изолированы'}
+                        {separationType === 'bass' && 'Бас изолирован'}
+                        {separationType === 'other' && 'Инструменты изолированы'}
+                      </p>
                     </div>
                     <Button 
                       variant="outline" 
@@ -365,10 +477,10 @@ const Index = () => {
                       <Icon name={isPlaying ? "Pause" : "Play"} size={24} />
                     </Button>
                   </div>
-                  {audioUrl && (
+                  {processedUrl && (
                     <audio 
                       ref={audioRef} 
-                      src={audioUrl}
+                      src={processedUrl}
                       onEnded={() => setIsPlaying(false)}
                       className="w-full"
                       controls
@@ -392,7 +504,18 @@ const Index = () => {
                 </div>
                 
                 <div className="flex gap-3">
-                  <Button className="flex-1 gradient-primary text-white border-0">
+                  <Button 
+                    className="flex-1 gradient-primary text-white border-0"
+                    onClick={() => {
+                      if (processedUrl) {
+                        const a = document.createElement('a');
+                        a.href = processedUrl;
+                        a.download = `${separationType}_${uploadedFile?.name || 'track.mp3'}`;
+                        a.click();
+                      }
+                    }}
+                    disabled={!processedUrl}
+                  >
                     <Icon name="Download" size={20} className="mr-2" />
                     Скачать
                   </Button>
