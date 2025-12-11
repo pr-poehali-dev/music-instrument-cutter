@@ -81,11 +81,6 @@ const Index = () => {
   };
 
   const exportFormats = ['MP3', 'WAV', 'FLAC', 'OGG', 'M4A'];
-  const galleryItems = [
-    { title: 'Летний трек', type: 'Вокал изолирован', duration: '3:24' },
-    { title: 'Рок композиция', type: 'Гитара извлечена', duration: '4:12' },
-    { title: 'Джаз импровизация', type: 'Саксофон', duration: '5:38' },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,9 +95,7 @@ const Index = () => {
           <nav className="hidden md:flex gap-6">
             <a href="#upload" className="text-sm font-medium hover:text-primary transition-colors">Загрузка</a>
             <a href="#pricing" className="text-sm font-medium hover:text-primary transition-colors">Тарифы</a>
-            <a href="#gallery" className="text-sm font-medium hover:text-primary transition-colors">Галерея</a>
             <a href="#faq" className="text-sm font-medium hover:text-primary transition-colors">Инструкция</a>
-            <a href="#contacts" className="text-sm font-medium hover:text-primary transition-colors">Контакты</a>
           </nav>
           <Button className="gradient-primary text-white border-0">
             <Icon name="Sparkles" size={16} className="mr-2" />
@@ -136,10 +129,6 @@ const Index = () => {
               >
                 <Icon name="Upload" size={20} className="mr-2" />
                 Загрузить трек
-              </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 border-2 hover:border-primary">
-                <Icon name="Play" size={20} className="mr-2" />
-                Посмотреть демо
               </Button>
             </div>
             <div className="mt-12 flex flex-wrap gap-8 justify-center text-sm text-muted-foreground">
@@ -221,7 +210,7 @@ const Index = () => {
         </div>
       </section>
 
-      {activeSection === 'editor' && uploadedFile && (
+      {uploadedFile && (
         <section id="editor" className="py-20 animate-fade-in">
           <div className="container mx-auto px-4">
             <div className="max-w-6xl mx-auto">
@@ -418,32 +407,6 @@ const Index = () => {
         </section>
       )}
 
-      <section id="gallery" className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <h3 className="text-4xl font-bold mb-4 text-center gradient-text">Галерея</h3>
-            <p className="text-center text-muted-foreground mb-12">Примеры обработанных треков</p>
-            
-            <div className="grid md:grid-cols-3 gap-6">
-              {galleryItems.map((item, index) => (
-                <Card key={index} className="p-6 glass hover:scale-105 transition-transform cursor-pointer">
-                  <div className="w-full aspect-square rounded-xl gradient-primary mb-4 flex items-center justify-center">
-                    <Icon name="Music" size={48} className="text-white" />
-                  </div>
-                  <h4 className="font-semibold mb-2">{item.title}</h4>
-                  <p className="text-sm text-muted-foreground mb-1">{item.type}</p>
-                  <p className="text-sm text-muted-foreground">{item.duration}</p>
-                  <Button variant="outline" className="w-full mt-4">
-                    <Icon name="Play" size={16} className="mr-2" />
-                    Прослушать
-                  </Button>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section id="pricing" className="py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
@@ -615,41 +578,6 @@ const Index = () => {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-          </div>
-        </div>
-      </section>
-
-      <section id="contacts" className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h3 className="text-4xl font-bold mb-4 gradient-text">Контакты</h3>
-            <p className="text-muted-foreground mb-12">Свяжитесь с нами для вопросов и предложений</p>
-            
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="p-6 glass hover:scale-105 transition-transform">
-                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mx-auto mb-4">
-                  <Icon name="Mail" size={24} className="text-white" />
-                </div>
-                <h4 className="font-semibold mb-2">Email</h4>
-                <p className="text-sm text-muted-foreground">support@audiocut.com</p>
-              </Card>
-              
-              <Card className="p-6 glass hover:scale-105 transition-transform">
-                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mx-auto mb-4">
-                  <Icon name="MessageCircle" size={24} className="text-white" />
-                </div>
-                <h4 className="font-semibold mb-2">Telegram</h4>
-                <p className="text-sm text-muted-foreground">@audiocut_support</p>
-              </Card>
-              
-              <Card className="p-6 glass hover:scale-105 transition-transform">
-                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mx-auto mb-4">
-                  <Icon name="Github" size={24} className="text-white" />
-                </div>
-                <h4 className="font-semibold mb-2">GitHub</h4>
-                <p className="text-sm text-muted-foreground">github.com/audiocut</p>
-              </Card>
-            </div>
           </div>
         </div>
       </section>
